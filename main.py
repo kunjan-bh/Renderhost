@@ -11,8 +11,6 @@ from fastapi.staticfiles import StaticFiles
 # App setup
 # -----------------------------
 app = FastAPI(title="Phishing Detection API")
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
 
 # -----------------------------
 # Input schema
@@ -96,8 +94,9 @@ def extract_features_from_url(url: str) -> pd.DataFrame:
 # Health check / index page
 # -----------------------------
 @app.get("/")
-def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+def home():
+    html_path = Path(__file__).parent / "index.html"
+    return HTMLResponse(html_path.read_text())
 
 # -----------------------------
 # Prediction endpoint
