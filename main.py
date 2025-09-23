@@ -6,6 +6,9 @@ import requests
 from bs4 import BeautifulSoup
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+from fastapi.responses import HTMLResponse
+
 
 # -----------------------------
 # App setup
