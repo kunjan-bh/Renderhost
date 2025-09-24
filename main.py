@@ -8,12 +8,16 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from fastapi.responses import HTMLResponse
+import os
+from fastapi.responses import FileResponse
 
 
 # -----------------------------
 # App setup
 # -----------------------------
 app = FastAPI(title="Phishing Detection API")
+
+URLS_FILE = "/tmp/urls.csv"
 
 # -----------------------------
 # Input schema
@@ -32,6 +36,14 @@ except Exception as e:
     print(f"❌ Failed to load model: {e}")
     model = None
 
+def save_url_locally(url: str):
+    urls = set()
+    if os.path.exists(URLS_FILE):
+        with open(URLS_FILE, "r") as f:
+            urls = set(line.strip() for line in f if line.strip())
+    urls.add(url)
+    with open(URLS_FILE, "w") as f:
+        f.write("\n".join(sorted(urls)))
 # -----------------------------
 # Feature extraction
 # -----------------------------
@@ -114,7 +126,16 @@ def predict(input_data: URLInput):
     df_features_model = df_features.drop(columns=['URL'])
     prediction = model.predict(df_features_model)
 
+    # Save URL to CSV on Render
+    save_url_locally(url)
+
     return {
         "url": url,
         "prediction": int(prediction[0])
     }
+
+@app.get("/download-urls")
+def download_urls():
+    if os.path.exists(URLS_FILE):
+        return FileResponse(URLS_FILE, media_type="text/csv", filename="urls.csv")
+    return {"error": "No URLs available yet"}
